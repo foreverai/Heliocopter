@@ -1,5 +1,14 @@
+'''
+Created on 12 Oct 2013
+
+Uses:
+Widget that goes up and down on touhc event
+Background that moves from right to left repeating
+
+'''
 import kivy
 kivy.require('1.8.0')
+
 from kivy.app import App
 from kivy.uix.widget import Widget
 from kivy.clock import Clock
@@ -15,6 +24,7 @@ class Controller(Widget):
     heli_rise_accel = NumericProperty(0.07)
     heli_fall_accel = NumericProperty(0.07)
     back_scroll_speed = NumericProperty(0.1)
+
     
     #Initiates instance
     def __init__(self, **kw):
@@ -67,5 +77,12 @@ class helicopterApp(App):
     def build(self):
         game = Controller(size=Window.size)
         return game
+
 if __name__ == '__main__':
     helicopterApp().run()
+    
+     
+            
+            
+            
+            
