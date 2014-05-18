@@ -1,24 +1,20 @@
-#:kivy 1.8.0
-<Controller>
-	#Instructions for drawing sky background
-	canvas.before:
+<Helicopter>
+    size: 50, 50
+    canvas:
+        Rectangle:
+        	source: 'Images/helicopter.png'
+            pos: self.pos
+            size: self.size
+
+<HelicopterGame>
+	helicopter: helicopter_obj
+
+	canvas:
 	    Rectangle:
 	    	source: 'Images/Sky_back_layer.png'
 	        pos: self.pos 
-	        size: self.size           
-	            
-	BoxLayout
-		size: root.size
-		orientation: 'vertical'
-		FloatLayout:
-			size: 1,1
-			
-			Image:
-				id: helicopter_obj
-				source: 'images/helicopter.png'
-				#Without size_hint the image is centered, as the image object is stretched to the size of the float layout
-				#even though the actual image stays the same size
-				size_hint: None, None
-				size: 80, 80
-				center_x: 200
-				center_y: 200
+	        size: self.size
+
+	Helicopter:
+		id: helicopter_obj
+		center: self.parent.center
