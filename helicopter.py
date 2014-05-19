@@ -44,10 +44,19 @@ class Helicopter(Widget):
             self.velocity = Vector(0,-self.general_velocity) + Vector(*self.acceleration)
             self.pos = Vector(*self.velocity) + self.pos
 
+#each individual peice of terrain
 class Terrain(Widget):
-    #Anchor layout
-    #look at making a widget tree
-    pass
+	general_velocity = NumericProperty(1)
+	position_x = NumericProperty(0); position_y = NumericProperty(0)
+	position = ReferenceListProperty(position_x, position_y)
+
+	#variable for whether it's at the top or bottom
+
+	def getPotition(self):
+		pass
+
+	def isOnScreen(self):
+		pass    
 
 class HelicopterGame(Widget):
     helicopter = ObjectProperty(None)
@@ -78,6 +87,9 @@ class HelicopterGame(Widget):
         else:
         	self.scroll_background()
         	self.helicopter.move()
+
+        #need to add the terrain moving here
+        #create a list of terrains, mayeb 10 up and 10 below
 
     def on_touch_down(self, touch):
         self.helicopter.touched_down = True
