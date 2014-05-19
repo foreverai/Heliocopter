@@ -37,14 +37,14 @@ class Helicopter(Widget):
 
     def move(self):
         if self.touched_down:
-            self.velocity = Vector(0,self.general_velocity)
             self.acceleration = Vector(0,self.acceleration_y + self.general_acceleration)
-            self.pos = Vector(*self.velocity) + Vector(*self.acceleration) + self.pos
+            self.velocity = Vector(0,self.general_velocity) + Vector(*self.acceleration)
+            self.pos = Vector(*self.velocity) + self.pos
 
         else:
-            self.velocity = Vector(0,-self.general_velocity)
             self.acceleration = Vector(0,self.acceleration_y - self.general_acceleration)
-            self.pos = Vector(*self.velocity) + Vector(*self.acceleration) + self.pos
+            self.velocity = Vector(0,-self.general_velocity) + Vector(*self.acceleration)
+            self.pos = Vector(*self.velocity) + self.pos
 
 class HelicopterGame(Widget):
     helicopter = ObjectProperty(None)
