@@ -1,5 +1,6 @@
 #TODO
-#End (when the top/bottom is hit)
+#Acceleration
+#Endend (when the top/bottom is hit)
 #Background scrolling
 
 from kivy.app import App
@@ -13,28 +14,20 @@ from kivy.properties import ListProperty, NumericProperty, \
 from kivy.vector import Vector
 
 class Helicopter(Widget):
-    general_velocity = NumericProperty(1)
-    general_acceleration = NumericProperty(0.1)
-
-    velocity_x = NumericProperty(0); velocity_y = NumericProperty(0)
+    up = NumericProperty(90)
+    down = NumericProperty (270)
+    velocity_x = NumericProperty(0)
+    velocity_y = NumericProperty(0)
     velocity = ReferenceListProperty(velocity_x, velocity_y)
-
-    acceleration_x = NumericProperty(0); acceleration_y = NumericProperty(0)
-    acceleration = ReferenceListProperty(acceleration_x, acceleration_y)
-
     touched_down = BooleanProperty(False)
-    count = NumericProperty(0)
 
     def move(self):
     	if self.touched_down:
-            self.velocity = Vector(0,self.general_velocity)
-            self.acceleration = Vector(0,self.acceleration_y + self.general_acceleration)
-            self.pos = Vector(*self.velocity) + Vector(*self.acceleration) + self.pos
-
+    		self.velocity = Vector(4,0).rotate(self.up)
+        	self.pos = Vector(*self.velocity) + self.pos
         else:
-            self.velocity = Vector(0,-self.general_velocity)
-            self.acceleration = Vector(0,self.acceleration_y - self.general_acceleration)
-            self.pos = Vector(*self.velocity) + Vector(*self.acceleration) + self.pos
+   			self.velocity = Vector(4,0).rotate(self.down)
+   			self.pos = Vector(*self.velocity) + self.pos
 
 class HelicopterGame(Widget):
     helicopter = ObjectProperty(None)
