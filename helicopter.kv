@@ -1,3 +1,5 @@
+#:kivy 1.8.0
+
 <Helicopter>
     size: 50, 50
     canvas:
@@ -9,12 +11,13 @@
 <HelicopterGame>
 	helicopter: helicopter_obj
 
-	canvas:
+	canvas.before:
 	    Rectangle:
 	    	source: 'Images/Sky_back_layer.png'
 	        pos: self.pos 
 	        size: self.size
-
+	
 	Helicopter:
 		id: helicopter_obj
-		center: self.parent.center
+		center: root.center
+	
