@@ -1,12 +1,11 @@
 #ADDED
-#Scrolling background
-#Replaced Helicopter.start() with Helicopter.__init__()
-#Added game over label
+#bit of terrain
 
 #TODO
-#End (when the top/bottom is hit)
-#Center game over label
-#Allow game to restart
+#End (when the top/bottom is hit), Center game over label, allow game to restart - look at schr
+#Look at screenmanager for managing the various screens? http://kivy.org/docs/api-kivy.uix.screenmanager.html#kivy.uix.screenmanager.ScreenManager
+#make helicopter start to the left a bit
+#make terrin scroll
 
 import kivy
 kivy.require('1.8.0')
@@ -33,7 +32,6 @@ class Helicopter(Widget):
     acceleration = ReferenceListProperty(acceleration_x, acceleration_y)
 
     touched_down = BooleanProperty(False)
-    count = NumericProperty(0)
 
     def move(self):
         if self.touched_down:
@@ -46,28 +44,28 @@ class Helicopter(Widget):
             self.velocity = Vector(0,-self.general_velocity) + Vector(*self.acceleration)
             self.pos = Vector(*self.velocity) + self.pos
 
+class Terrain(Widget):
+    #Anchor layout
+    #look at making a widget tree
+    pass
+
 class HelicopterGame(Widget):
     helicopter = ObjectProperty(None)
-    back_scroll_speed = NumericProperty(0.1)
     
-    #The __init__ runs when the object is first called.  so you don't need to run a 'start' method as such
-    #Watch out of the two '_ _' at the start and end of init.  Missing them off screwed me a few times.
-    #Initiates instance
+    back_scroll_speed = NumericProperty(0.2)
+    
     def __init__(self, **kw):
         super(HelicopterGame, self).__init__(**kw)
-        
+        self.add_terrain()
+
         #Instructions for drawing scrolling background
         with self.canvas.before:
         	texture = CoreImage('Images/background.png').texture
         	texture.wrap = 'repeat'
         	self.scroll_back = Rectangle(texture=texture, size=self.size, pos=self.pos)
         	
-        	Clock.schedule_interval(self.update, 0)
+        Clock.schedule_interval(self.update, 0)
         	
-        #Draws initial helicopter
-        self.helicopter.center = self.center						#Game Runs without this code, can it be removed?						
-        self.helicopter.velocity = Vector(4, 0).rotate(270)         #Game Runs without this code, can it be removed?	
-            
     #Moves the vertice co-ordinates of scroll_back        
     def scroll_background(self, *l):
         t = Clock.get_boottime()
@@ -90,6 +88,10 @@ class HelicopterGame(Widget):
     def end(self):
 		game_over = Label(text = 'GAME OVER')
 		self.add_widget(game_over)
+
+    def add_terrain(self):
+        w = Terrain()
+        self.add_widget(w)
 
 
 class HelicopterApp(App):
