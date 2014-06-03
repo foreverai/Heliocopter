@@ -1,23 +1,49 @@
 #:kivy 1.8.0
 
+<StartPopUp>            
+    size_hint: self.popup_size
+    auto_dismiss: False
+    title: 'Welcome'
+    Button:
+        text: 'Play'
+        on_press: root.start_click()
+        ###inbuilt function to remove popup
+        on_press: root.dismiss()  
+
+<Background>
+    canvas.before: 
+    	Rectangle:
+	    	source: 'Images/Sky_back_layer.png'
+	        pos: self.pos 
+	        size: self.size
+        Rectangle:
+        	texture: self.texture
+            pos: self.pos
+            size: self.size
+            tex_coords: self.texture_coords 	
+			        
 <Helicopter>
-    size: 50, 50
     canvas:
         Rectangle:
         	source: 'Images/helicopter.png'
             pos: self.pos
-            size: self.size
+            size: self.size  
 
 <HelicopterGame>
+	###creates references to the added object ids in the main HelicopterGame widget
 	helicopter: helicopter_obj
-
-	canvas.before:
-	    Rectangle:
-	    	source: 'Images/Sky_back_layer.png'
-	        pos: self.pos 
-	        size: self.size
+	background: background_obj
 	
-	Helicopter:
-		id: helicopter_obj
-		center: root.center
+	###BoxLayout here ensures the background is added to the whole screen, not just the bottom left corner        
+	BoxLayout
+		orientation: 'vertical'
+		size: root.size        
+		FloatLayout:           
+			Background:
+		        id: background_obj  	        
+		             
+			Helicopter:
+				id: helicopter_obj
+				size_hint: .1, .1
+				pos: self.start_position
 	
