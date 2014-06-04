@@ -194,8 +194,8 @@ class Helicopter(Widget):
 class HelicopterGame(Widget):
     helicopter = ObjectProperty(None)
     background = ObjectProperty(None)
+    bezierline = ObjectProperty(None)
     game_state = BooleanProperty(False)
-    line=ObjectProperty(None)
     
     def __init__(self, **kw):
         super(HelicopterGame, self).__init__(**kw) 
@@ -229,7 +229,7 @@ class HelicopterGame(Widget):
             self.helicopter.alive_check(self)     #passes helicoptergame instance to method
             self.background.scroll_background()
             self.helicopter.move()    
-            self.line.move()
+            self.bezierline.move()
 
 class HelicopterApp(App):
     def build(self):
