@@ -32,7 +32,7 @@ from kivy.graphics import Color, Bezier, Line
 import random
 
 class BezierLine(Widget):
-    points_a=[]; points_b=[]
+    points_a=ListProperty([]); points_b=ListProperty([])
     x_list=[]; y_list=[]
     x_start=-300; x_end=1400; x_step=100
     #for later, we can slowly increase y end to make the gap between the walls thinner
@@ -48,20 +48,6 @@ class BezierLine(Widget):
         self.points_a = self.initialise_points()
         self.points_b = self.make_points_b(self.points_a)
 
-        with self.canvas:
-            Color(1.0, 0.0, 0.0)
-
-            self.bezier_a = Bezier(
-                    points=self.points_a,
-                    segments=180,
-                    loop=False,
-                    )
-
-            self.bezier_b = Bezier(
-                    points=self.points_b,
-                    segments=180,
-                    loop=False,
-                    )
 
     def make_points_b(self, l):
         x=l[::2]
@@ -115,8 +101,8 @@ class BezierLine(Widget):
         self.y_list=self.flow_y(self.y_list)
         a_list=self.merge_lists(self.x_list,self.y_list)
         b_list=self.make_points_b(a_list)
-        self.bezier_a.points=a_list
-        self.bezier_b.points=b_list
+        self.points_a=a_list
+        self.points_b=b_list
 
 class StartPopUp(Popup):
     popup_size = ListProperty([.2, .2])
