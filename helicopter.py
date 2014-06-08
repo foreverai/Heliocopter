@@ -28,10 +28,36 @@ from kivy.properties import ListProperty, NumericProperty, \
 	ObjectProperty, BooleanProperty, ReferenceListProperty
 from kivy.vector import Vector
 from kivy.uix.popup import Popup
-from kivy.graphics import Color, Bezier, Line
+from kivy.graphics import Bezier
 import random
 
-class BezierLine(Widget):
+class StartPopUp(Popup):
+    popup_size = ListProperty([.2, .2])
+    
+    def __init__(self, HelicopterGame, **kw):
+        super(StartPopUp, self).__init__(**kw)
+        self.HelicopterGame = HelicopterGame
+           
+    def start_click(self):
+        self.HelicopterGame.start_game() 
+        
+class Background(Widget):
+    back_scroll_speed = NumericProperty(0.1)
+    texture = CoreImage('Images/background.png').texture
+    texture.wrap = 'repeat'
+    #These points are from a print of self.texture_coords in def scroll_background
+    #they give the intiial position of the background
+    #minus parts are the co-ordinates of a flipped image of the background 
+    texture_coords = ListProperty([-0.3, 0.0, -1.3, 0.0, -1.3, -1.0, -0.3, -1.0])
+    
+    def __init__(self, **kw):
+        super(Background, self).__init__(**kw)
+            
+    def scroll_background(self, *l):
+        t = Clock.get_boottime()
+        self.texture_coords = -(t * self.back_scroll_speed), 0, -(t * self.back_scroll_speed + 1), 0,  -(t * self.back_scroll_speed + 1), -1, -(t * self.back_scroll_speed), -1              
+
+class Tunnel(Widget):
     points_a=ListProperty([]); points_b=ListProperty([])
     x_list=[]; y_list=[]
     x_start=-300; x_end=1400; x_step=100
@@ -44,7 +70,7 @@ class BezierLine(Widget):
     update_y=False
 
     def __init__(self, *args, **kwargs):
-        super(BezierLine, self).__init__(*args, **kwargs)
+        super(Tunnel, self).__init__(*args, **kwargs)
         self.points_a = self.initialise_points()
         self.points_b = self.make_points_b(self.points_a)
 
@@ -104,37 +130,14 @@ class BezierLine(Widget):
         self.points_a=a_list
         self.points_b=b_list
 
-class StartPopUp(Popup):
-    popup_size = ListProperty([.2, .2])
-    
-    def __init__(self, HelicopterGame, **kw):
-        super(StartPopUp, self).__init__(**kw)
-        self.HelicopterGame = HelicopterGame
-           
-    def start_click(self):
-        self.HelicopterGame.start_game() 
-        
-class Background(Widget):
-    back_scroll_speed = NumericProperty(0.1)
-    texture = CoreImage('Images/background.png').texture
-    texture.wrap = 'repeat'
-    #These points are from a print of self.texture_coords in def scroll_background
-    #they give the intiial position of the background
-    #minus parts are the co-ordinates of a flipped image of the background 
-    texture_coords = ListProperty([-0.3, 0.0, -1.3, 0.0, -1.3, -1.0, -0.3, -1.0])
-    
-    def __init__(self, **kw):
-        super(Background, self).__init__(**kw)
-            
-    def scroll_background(self, *l):
-        t = Clock.get_boottime()
-        self.texture_coords = -(t * self.back_scroll_speed), 0, -(t * self.back_scroll_speed + 1), 0,  -(t * self.back_scroll_speed + 1), -1, -(t * self.back_scroll_speed), -1              
+class Obstacles(Widget):
+    pass   
         
 class Helicopter(Widget):
     #How to change these to percentages?
     start_position = ListProperty([200, 200])
-    general_velocity = NumericProperty(1)
-    general_acceleration = NumericProperty(0.1)
+    general_velocity = NumericProperty(3)
+    general_acceleration = NumericProperty(0.3)
 
     velocity_x = NumericProperty(0); velocity_y = NumericProperty(0)
     velocity = ReferenceListProperty(velocity_x, velocity_y)
@@ -180,7 +183,7 @@ class Helicopter(Widget):
 class HelicopterGame(Widget):
     helicopter = ObjectProperty(None)
     background = ObjectProperty(None)
-    bezierline = ObjectProperty(None)
+    tunnel = ObjectProperty(None)
     game_state = BooleanProperty(False)
     
     def __init__(self, **kw):
@@ -194,8 +197,7 @@ class HelicopterGame(Widget):
     #Runs when popup is clicked        
     def start_game(self):
         self.helicopter.initilise()
-        self.game_state = True    
-        self.line=BezierLine()          
+        self.game_state = True             
                     
     def on_touch_down(self, touch):
         self.helicopter.touched_down = True
@@ -214,8 +216,8 @@ class HelicopterGame(Widget):
         if self.game_state:
             self.helicopter.alive_check(self)     #passes helicoptergame instance to method
             self.background.scroll_background()
-            self.helicopter.move()    
-            self.bezierline.move()
+            self.helicopter.move()
+            self.tunnel.move()    
 
 class HelicopterApp(App):
     def build(self):

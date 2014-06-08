@@ -22,7 +22,7 @@
             size: self.size
             tex_coords: self.texture_coords 
             
-<BezierLine>
+<Tunnel>
 	canvas:
 		Color:
 			rgba: 1, 0, 0, 0.5
@@ -31,7 +31,14 @@
 			segments: 180
 		Bezier:
 			points: self.points_b
-			segments: 180       	
+			segments: 180    
+			
+<Obstacle>
+    canvas:
+        Rectangle:
+            source: 'Images/Bird.png'
+            pos: root.pos
+            size: root.size  			   	
 			        
 <Helicopter>
     canvas:
@@ -44,7 +51,7 @@
 	###creates references to the added object ids in the main HelicopterGame widget
 	helicopter: helicopter_obj
 	background: background_obj
-	bezierline: bezierline_obj
+	tunnel: tunnel_obj
 	
 	###BoxLayout here ensures the background is added to the whole screen, not just the bottom left corner        
 	BoxLayout
@@ -54,11 +61,12 @@
 			Background:
 		        id: background_obj  
 		    
-		    BezierLine:
-		    	id: bezierline_obj    	        
-		             
-			Helicopter:
+		    Helicopter:
 				id: helicopter_obj
-				size_hint: .1, .1
+				size_hint: .08, .1
 				pos: self.start_position
+				
+		    Tunnel:
+		    	id: tunnel_obj    	        
+		            
 	
