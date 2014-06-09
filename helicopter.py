@@ -1,14 +1,14 @@
 '''
 ADDED
--Start popup
--Game loop
--Moved entire background (sky and buildings) to seperate widget
--Seperated all helicopter behaviour into its own widget
--Initilised helicopter position and speed
+-Based obstacles on tunnel position, but in hacky way
+-Helicopter start/restart position, but in hacky way
+-Made the background start from zero co-ordinates
+-Fixed clock scheduling for first obstacle
 
 TODO
--Add walls
--Add obstacles
+-Add texture to walls
+-Add collisions
+-Make first part of wall straight (based on time_first_ob if possible)
 -Add distance measurement
 
 '''
@@ -32,30 +32,34 @@ from random import randrange
 import random
 
 class StartPopUp(Popup):
+    helicopter_game = ObjectProperty(None)
+    'Popup size'
     popup_size = ListProperty([.2, .2])
     
     def __init__(self, HelicopterGame, **kw):
         super(StartPopUp, self).__init__(**kw)
-        self.HelicopterGame = HelicopterGame
+        self.helicopter_game = HelicopterGame
            
     def start_click(self):
-        self.HelicopterGame.start_game() 
+        self.helicopter_game.start_game() 
         
 class Background(Widget):
-    back_scroll_speed = NumericProperty(0.1)
+    'Speed of scrolling'
+    back_scroll_speed = NumericProperty(0.05)
+    
+    'Background Image'
     texture = CoreImage('Images/background.png').texture
     texture.wrap = 'repeat'
-    #These points are from a print of self.texture_coords in def scroll_background
-    #they give the intiial position of the background
-    #minus parts are the co-ordinates of a flipped image of the background 
-    texture_coords = ListProperty([-0.3, 0.0, -1.3, 0.0, -1.3, -1.0, -0.3, -1.0])
+    
+    start_position = NumericProperty(0)
+    texture_coords = ListProperty([-0.0, 0.0, -1.0, 0.0, -1.0, -1.0, -0.0, -1.0])    #initial co-ordinates of background
     
     def __init__(self, **kw):
         super(Background, self).__init__(**kw)
             
     def scroll_background(self, *l):
-        t = Clock.get_boottime()
-        self.texture_coords = -(t * self.back_scroll_speed), 0, -(t * self.back_scroll_speed + 1), 0,  -(t * self.back_scroll_speed + 1), -1, -(t * self.back_scroll_speed), -1              
+        self.texture_coords = -(self.start_position * self.back_scroll_speed), 0, -(self.start_position * self.back_scroll_speed + 1), 0,  -(self.start_position * self.back_scroll_speed + 1), -1, -(self.start_position * self.back_scroll_speed), -1
+        self.start_position += self.back_scroll_speed           
 
 class Tunnel(Widget):
     points_a=ListProperty([]); points_b=ListProperty([])
@@ -131,16 +135,17 @@ class Tunnel(Widget):
         self.points_b=b_list
 
 class Obstacle(Widget):
+    helicopter_game = ObjectProperty(None)
     'size of obstacle'
     obstacle_height = NumericProperty(80)
     obstacle_width = NumericProperty(30)
     sizing = ReferenceListProperty(obstacle_width , obstacle_height)
     
-    'obstacle speed'
-    velocity = ListProperty([-4, 0])
+    'obstacle speed, needs to be the same as tunnel speed'
+    velocity = ListProperty([5, 0])
     
     'distance between obstacles'
-    distance = NumericProperty(250)
+    distance = NumericProperty(300)
     
     #Bottom left corner of obstacle
     pos_x = NumericProperty(0)
@@ -152,41 +157,48 @@ class Obstacle(Widget):
     
     def __init__(self, HelicopterGame, **kw):
         super(Obstacle, self).__init__(**kw)
-        self.HelicopterGame = HelicopterGame
+        self.helicopter_game = HelicopterGame
         self.start_position() 
     
+    #Runs when an instance of the widget is created
     def start_position(self):
-        self.pos_x = self.HelicopterGame.get_right()  #x-co-ordinate of new obstacle
-        #need these to inherit from tunnel walls, self.HelicopterGame.tunnel.walls?
-        self.tunnel_top = 500
-        self.tunnel_bot = 100 - self.obstacle_height
+        self.pos_x = self.helicopter_game.get_right()  #x-co-ordinate of new obstacle
+        #Hacky way to link obstacles to wall
+        #better way?
+        self.tunnel_top = self.helicopter_game.tunnel.points_b[23] - self.obstacle_height/2  #obstacle can be half way into wall
+        self.tunnel_bot = self.helicopter_game.tunnel.points_a[23] - self.obstacle_height/2
         self.pos_y = randrange(self.tunnel_bot, self.tunnel_top, 1)  #y-co-ordinate of new obstacle 
-    
-    #check if obstacle should be added
+            
+    #Check if obstacle should be added
     def add_check(self):
-        screen_right = self.HelicopterGame.get_right()
-        current_distance = screen_right - self.position[0]   #distance between right hand side of screen and current x co-ordinate of obstacle
+        screen_right = self.helicopter_game.get_right()
+        current_distance = screen_right - self.position[0]   #Distance between right hand side of screen and current x co-ordinate of obstacle
         cond1 = current_distance > self.distance
         cond2 = self.next_added == False
         if cond1 and cond2:
-            self.HelicopterGame.add_obstacle()
+            self.helicopter_game.add_obstacle()
             self.next_added = True
             
-    #check if obstacle should be removed
+    #Check if obstacle should be removed
     def remove_check(self):
         screen_left = 0 - self.obstacle_width  #x-coordinate of left side of screen minus obstacle width
-        if self.position[0] < screen_left:   #0 indicates first position in position list
-            self.HelicopterGame.remove_obstacle()
+        if self.position[0] < screen_left:   #0 indicates first position in position list (which is the x_co-ordinate)
+            self.helicopter_game.remove_obstacle()
 
     def update(self):
         self.add_check()
         self.remove_check()
-        self.position = Vector(*self.position) + Vector(*self.velocity)  #current position plus velocity
+        self.position = Vector(*self.position) - Vector(*self.velocity)  #current position plus velocity
         
 class Helicopter(Widget):
     'Helicopter physics'
     general_velocity = NumericProperty(2)
     general_acceleration = NumericProperty(0.6)
+    
+    'helicopter size'
+    sizing = ListProperty([0.08, 0.1])
+    
+    start_position = ([])
     
     start_x = NumericProperty(0)
     start_y = NumericProperty(0)
@@ -201,11 +213,11 @@ class Helicopter(Widget):
     acceleration = ReferenceListProperty(acceleration_x, acceleration_y)
 
     touched_down = BooleanProperty(False)
+    got_start_pos = BooleanProperty(False)
     
     def __init__(self, **kw):
-        super(Helicopter, self).__init__(**kw) 
-        self.initilise()
-    
+        super(Helicopter, self).__init__(**kw)
+        
     #ensures helicopter isn't moving when game is restarted
     #positions helicopter in start position
     def initilise(self):
@@ -213,10 +225,12 @@ class Helicopter(Widget):
         self.velocity_y = 0
         self.acceleration_x = 0
         self.acceleration_y = 0
-        #need these to be based on HelicopterGame widget
-        self.start_x = 200
-        self.start_y = 200
-        self.pos = self.start_position
+        #bit of a hacky way to get start position of helicopter for game restart
+        #better way?
+        if self.got_start_pos == False:
+            self.start_position = self.pos
+            self.got_start_pos = True
+        self.pos = self.start_position              
         
     def move(self):
         if self.touched_down:
@@ -252,37 +266,41 @@ class HelicopterGame(Widget):
     
     def __init__(self, **kw):
         super(HelicopterGame, self).__init__(**kw) 
-        
+ 
     #runs at beginning on clock schedule and at end game    
     def start_popup(self, *args):    
-        sp = StartPopUp(self)    #Passes HelicopterGame widget to popup
+        sp = StartPopUp(self)    #Passes HelicopterGame instance to popup
         sp.open() 
     
     #Runs when popup is clicked        
     def start_game(self):
         for obstacle in self.obstacles:
             self.remove_widget(obstacle)
+            self.obstacles = self.obstacles[1:] 
         self.helicopter.initilise()
         self.game_state = True  
-        Clock.schedule_once(self.add_obstacle, self.time_first_ob)   #adds obstacle after certain time        
+        Clock.schedule_once(self.add_obstacle, self.time_first_ob)   #adds obstacle after certain time, unscheduled in end_game if game ends before event fires
                     
     def on_touch_down(self, touch):
         self.helicopter.touched_down = True
 
     def on_touch_up(self, touch):
         self.helicopter.touched_down = False 
-        
+    
+    #Runs on game start and when conditions are met in Obstacle() thereafter    
     def add_obstacle(self, *args):
         new_obstacle = Obstacle(self)  #passes helicopter game instance to obstacle widget
         self.add_widget(new_obstacle)
         self.obstacles = self.obstacles + [new_obstacle]   
-            
+    
+    #Runs when conditions are met in Obstacle()        
     def remove_obstacle(self):
         self.remove_widget(self.obstacles[0])
         self.obstacles = self.obstacles[1:]    #not sure what this line does, moves next obstacle to start of array?
     
     #Runs when alive_check detects a collision    
     def end_game(self):
+        Clock.unschedule(self.add_obstacle)
         self.helicopter.touched_down = False    #Need this line as the on_touch_up event isn't fired when the helicopter crashes
         self.game_state = False
         sp = StartPopUp(self)

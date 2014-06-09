@@ -43,8 +43,8 @@
         Rectangle:
         	source: 'Images/helicopter.png'
             pos: self.pos
-            size: self.size  
-
+            size: self.size   
+	
 <HelicopterGame>
 	###creates references to the added object ids in the main HelicopterGame widget
 	helicopter: helicopter_obj
@@ -61,9 +61,10 @@
 		    
 		    Helicopter:
 				id: helicopter_obj
-				size_hint: .08, .1
-				pos: self.start_position
-				
+				size_hint: self.sizing
+				x: root.width/6
+				center_y: root.center_y
+
 		    Tunnel:
 		    	id: tunnel_obj    	        
 		            
