@@ -64,7 +64,7 @@ class Background(Widget):
 class Tunnel(Widget):
     points_a=ListProperty([]); points_b=ListProperty([])
     x_list=[]; y_list=[]
-    x_start=-300; x_end=1400; x_step=100
+    x_start=-300; x_end=1400; x_step=95
     #for later, we can slowly increase y end to make the gap between the walls thinner
     y_start=0; y_end=200; y_diff=600-y_end
 
@@ -80,8 +80,7 @@ class Tunnel(Widget):
 
 
     def make_points_b(self, l):
-        x=l[::2]
-        y=l[1::2]
+        x,y=self.break_list(l)
         new_y=[i+self.y_diff for i in y]
         return self.merge_lists(x,new_y)
 
@@ -103,6 +102,12 @@ class Tunnel(Widget):
             list.extend([y[i]])
         return list
 
+    def break_list(self, l):
+        x=l[0::2]
+        y=l[1::2]
+        return x,y
+
+
     def flow_x(self,x):
         self.update_y=False
         x_list=[]
@@ -114,6 +119,8 @@ class Tunnel(Widget):
             x_list.pop(0)
             x_list.extend([self.x_end])
             self.update_y=True
+            print x
+        #print x_list
         return x_list
 
     def flow_y(self,y):
@@ -133,6 +140,12 @@ class Tunnel(Widget):
         b_list=self.make_points_b(a_list)
         self.points_a=a_list
         self.points_b=b_list
+        self.get_collision_coords()
+
+    def get_collision_coords(self):  
+        x,y=self.break_list(self.points_a)
+        a,b=self.break_list(self.points_b)
+        #print x[0],a[0]
 
 class Obstacle(Widget):
     helicopter_game = ObjectProperty(None)
@@ -189,7 +202,9 @@ class Obstacle(Widget):
         self.add_check()
         self.remove_check()
         self.position = Vector(*self.position) - Vector(*self.velocity)  #current position plus velocity
-        
+        if (self.collide_widget(self.helicopter_game.helicopter)):
+            print "yes"
+
 class Helicopter(Widget):
     'Helicopter physics'
     general_velocity = NumericProperty(2)
@@ -252,7 +267,10 @@ class Helicopter(Widget):
             self.HelicopterGame.end_game()
         #Alive    
         else:
-            return True 
+            return True
+
+    def get_position(self):
+        return self.pos
         
 class HelicopterGame(Widget):
     'time until first obstacle'
@@ -314,6 +332,8 @@ class HelicopterGame(Widget):
             self.tunnel.move()  
             for obstacle in self.obstacles:
                 obstacle.update()   
+            #print self.tunnel.right
+            #print self.helicopter.get_position()
 
 class HelicopterApp(App):
     def build(self):
