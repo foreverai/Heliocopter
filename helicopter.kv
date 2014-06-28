@@ -1,6 +1,7 @@
 #:kivy 1.8.0
 
-<StartPopUp>            
+<StartPopUp>      
+	app: app      
     size_hint: self.popup_size
     auto_dismiss: False
     title: 'Welcome'
@@ -35,7 +36,7 @@
     canvas:
         Rectangle:
             source: 'Images/Bird.png'
-            pos: root.position
+            pos: self.pos
             size: root.sizing  			   	
 			        
 <Helicopter>

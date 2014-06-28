@@ -147,11 +147,6 @@ class Obstacle(Widget):
     'distance between obstacles'
     distance = NumericProperty(300)
     
-    #Bottom left corner of obstacle
-    pos_x = NumericProperty(0)
-    pos_y = NumericProperty(0)
-    position = ReferenceListProperty(pos_x , pos_y)
-    
     #Has the next obstacle been addeed?
     next_added = BooleanProperty(False)
     
@@ -162,17 +157,18 @@ class Obstacle(Widget):
     
     #Runs when an instance of the widget is created
     def start_position(self):
-        self.pos_x = self.helicopter_game.get_right()  #x-co-ordinate of new obstacle
+        pos_x = self.helicopter_game.get_right()  #x-co-ordinate of new obstacle
         #Hacky way to link obstacles to wall
         #better way?
         self.tunnel_top = self.helicopter_game.tunnel.points_b[23] - self.obstacle_height/2  #obstacle can be half way into wall
         self.tunnel_bot = self.helicopter_game.tunnel.points_a[23] - self.obstacle_height/2
-        self.pos_y = randrange(self.tunnel_bot, self.tunnel_top, 1)  #y-co-ordinate of new obstacle 
+        pos_y = randrange(self.tunnel_bot, self.tunnel_top, 1)  #y-co-ordinate of new obstacle 
+        self.pos = pos_x, pos_y
             
     #Check if obstacle should be added
     def add_check(self):
         screen_right = self.helicopter_game.get_right()
-        current_distance = screen_right - self.position[0]   #Distance between right hand side of screen and current x co-ordinate of obstacle
+        current_distance = screen_right - self.pos[0]   #Distance between right hand side of screen and current x co-ordinate of obstacle
         cond1 = current_distance > self.distance
         cond2 = self.next_added == False
         if cond1 and cond2:
@@ -182,13 +178,13 @@ class Obstacle(Widget):
     #Check if obstacle should be removed
     def remove_check(self):
         screen_left = 0 - self.obstacle_width  #x-coordinate of left side of screen minus obstacle width
-        if self.position[0] < screen_left:   #0 indicates first position in position list (which is the x_co-ordinate)
+        if self.pos[0] < screen_left:   #0 indicates first position in position list (which is the x_co-ordinate)
             self.helicopter_game.remove_obstacle()
 
     def update(self):
         self.add_check()
-        self.remove_check()
-        self.position = Vector(*self.position) - Vector(*self.velocity)  #current position plus velocity
+        self.remove_check() 
+        self.pos = Vector(*self.pos) - Vector(*self.velocity)    #current position plus velocity
         
 class Helicopter(Widget):
     'Helicopter physics'
@@ -313,6 +309,8 @@ class HelicopterGame(Widget):
             self.helicopter.move()
             self.tunnel.move()  
             for obstacle in self.obstacles:
+                if obstacle.collide_widget(self.helicopter):
+                    self.end_game()
                 obstacle.update()   
 
 class HelicopterApp(App):
