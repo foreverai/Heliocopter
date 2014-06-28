@@ -306,9 +306,6 @@ class HelicopterGame(Widget):
                 if obstacle.collide_widget(self.helicopter):
                     self.end_game()
                 obstacle.update()   
-                print obstacle.collide_widget(self.helicopter)
-
-
 
 class HelicopterApp(App):
     game = ObjectProperty()
