@@ -32,16 +32,12 @@ from random import randrange
 import random
 
 class StartPopUp(Popup):
-    helicopter_game = ObjectProperty(None)
+    app = ObjectProperty(None)
     'Popup size'
     popup_size = ListProperty([.2, .2])
-    
-    def __init__(self, HelicopterGame, **kw):
-        super(StartPopUp, self).__init__(**kw)
-        self.helicopter_game = HelicopterGame
            
     def start_click(self):
-        self.helicopter_game.start_game() 
+        self.app.game.start_game() 
         
 class Background(Widget):
     'Speed of scrolling'
@@ -187,6 +183,8 @@ class Obstacle(Widget):
         self.pos = Vector(*self.pos) - Vector(*self.velocity)    #current position plus velocity
         
 class Helicopter(Widget):
+    helicopter_game = ObjectProperty(None)
+    
     'Helicopter physics'
     general_velocity = NumericProperty(2)
     general_acceleration = NumericProperty(0.6)
@@ -259,14 +257,11 @@ class HelicopterGame(Widget):
     tunnel = ObjectProperty(None)
     obstacles = ListProperty([])
     game_state = BooleanProperty(False)
+
+    app = ObjectProperty(None)
     
     def __init__(self, **kw):
         super(HelicopterGame, self).__init__(**kw) 
- 
-    #runs at beginning on clock schedule and at end game    
-    def start_popup(self, *args):    
-        sp = StartPopUp(self)    #Passes HelicopterGame instance to popup
-        sp.open() 
     
     #Runs when popup is clicked        
     def start_game(self):
@@ -299,8 +294,7 @@ class HelicopterGame(Widget):
         Clock.unschedule(self.add_obstacle)
         self.helicopter.touched_down = False    #Need this line as the on_touch_up event isn't fired when the helicopter crashes
         self.game_state = False
-        sp = StartPopUp(self)
-        sp.open()       
+        self.app.start_popup()     
     
     def update(self, dt):
         if self.game_state:
@@ -312,13 +306,25 @@ class HelicopterGame(Widget):
                 if obstacle.collide_widget(self.helicopter):
                     self.end_game()
                 obstacle.update()   
+                print obstacle.collide_widget(self.helicopter)
+
+
 
 class HelicopterApp(App):
+    game = ObjectProperty()
+    startpopup = ObjectProperty()
+
     def build(self):
-        game = HelicopterGame()
-        Clock.schedule_once(game.start_popup, 1)
-        Clock.schedule_interval(game.update, 0)
-        return game
+        self.game = HelicopterGame()
+        self.startpopup = StartPopUp()
+
+        Clock.schedule_once(self.start_popup, 1)
+        Clock.schedule_interval(self.game.update, 0)
+
+        return self.game
+
+    def start_popup(self, *args):    
+        self.startpopup.open() 
 
 if __name__ == '__main__':
     HelicopterApp().run()
