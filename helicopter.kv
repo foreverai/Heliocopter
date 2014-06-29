@@ -12,6 +12,7 @@
         on_press: root.dismiss()  
 
 <Background>
+	game: app.game
     canvas.before: 
     	Rectangle:
 	    	source: 'Images/Sky_back_layer.png'
@@ -24,8 +25,10 @@
             tex_coords: self.texture_coords 
             
 <Tunnel>
+	game: app.game
 	canvas:
 		Bezier:
+			id: bezier_top
 			points: self.points_a
 			segments: 180
 		Bezier:
@@ -33,6 +36,7 @@
 			segments: 180    
 			
 <Obstacle>
+	game: app.game
     canvas:
         Rectangle:
             source: 'Images/Bird.png'
@@ -40,6 +44,7 @@
             size: root.sizing  			   	
 			        
 <Helicopter>
+	game: app.game
     canvas:
         Rectangle:
         	source: 'Images/helicopter.png'
@@ -47,11 +52,10 @@
             size: self.size   
 	
 <HelicopterGame>
-	###creates references to the added object ids in the main HelicopterGame widget
+	app: app
 	helicopter: helicopter_obj
 	background: background_obj
 	tunnel: tunnel_obj
-	app: app
 	
 	###BoxLayout here ensures the background is added to the whole screen, not just the bottom left corner        
 	BoxLayout
@@ -60,14 +64,14 @@
 		FloatLayout:           
 			Background:
 		        id: background_obj  
-		    
+
+		    Tunnel:
+		    	id: tunnel_obj    
+		    	
 		    Helicopter:
 				id: helicopter_obj
 				size_hint: self.sizing
 				x: root.width/6
-				center_y: root.center_y
-
-		    Tunnel:
-		    	id: tunnel_obj    	        
+				center_y: root.center_y		        
 		            
 	
