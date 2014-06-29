@@ -1,12 +1,15 @@
 '''
 ADDED
--Added obstacle collisions
--Created widget tree refeerences
+-Modified tunnel to mesh
+-Made first part of tunnel straight
+-Added tunnel collisions
+-Mode tunnel gap get smaller
 
 TODO
+-Change points to percentages
+-Tidy up code could probably jsut generate bottom list, and do bottom list plus gap for top list
 -Add texture to walls
--Add collisions
--Make first part of wall straight (based on time_first_ob if possible)
+-Alter how tunnel collisions/new obstacle position is calculated
 -Add distance measurement
 
 '''
@@ -59,77 +62,112 @@ class Background(Widget):
 
 class Tunnel(Widget):
     game = ObjectProperty(None)
-    points_a=ListProperty([]); points_b=ListProperty([])
-    x_list=[]; y_list=[]
-    x_start=-300; x_end=1400; x_step=100
-    #for later, we can slowly increase y end to make the gap between the walls thinner
-    y_start=0; y_end=200; y_diff=600-y_end
-
-    #maybe also increase velocity slowly
-    velocity=5
-
-    update_y=False
-
-    def __init__(self, *args, **kwargs):
-        super(Tunnel, self).__init__(*args, **kwargs)
-        self.points_a = self.initialise_points()
-        self.points_b = self.make_points_b(self.points_a)
-
-    def make_points_b(self, l):
-        x=l[::2]
-        y=l[1::2]
-        new_y=[i+self.y_diff for i in y]
-        return self.merge_lists(x,new_y)
-
-    def initialise_points(self):
-        self.x_list=range(self.x_start,self.x_end,self.x_step)
-        self.y_list=self.generate_random_list()
-        return self.merge_lists(self.x_list, self.y_list)
-
-    def generate_random_list(self):
-        y=[]
-        for i in range(self.x_start,self.x_end,self.x_step):
-            y.extend([random.randint(self.y_start,self.y_end)])
-        return y
-
-    def merge_lists(self, x, y):
-        list=[]
-        for i in range(len(x)):
-            list.extend([x[i]])
-            list.extend([y[i]])
-        return list
-
-    def flow_x(self,x):
-        self.update_y=False
-        x_list=[]
-        x_length=len(x)
-        x_limit=self.x_end-self.x_step
-        for i in range(x_length):
-            x_list.extend([x[i]-self.velocity])
-        if(x[-1]<=x_limit):
-            x_list.pop(0)
-            x_list.extend([self.x_end])
-            self.update_y=True
-        return x_list
-
-    def flow_y(self,y):
-        y_list=[]
-        y_length=len(y)
-        if(self.update_y):
-            for i in range(y_length-1):
-                y_list.extend([y[i+1]])
-            y_list.extend([random.randint(self.y_start,self.y_end)])
-            return y_list
-        return y
-
-    def move(self):
-        self.x_list=self.flow_x(self.x_list)
-        self.y_list=self.flow_y(self.y_list)
-        a_list=self.merge_lists(self.x_list,self.y_list)
-        b_list=self.make_points_b(a_list)
-        self.points_a=a_list
-        self.points_b=b_list
-
+    
+    vertices_top = ListProperty([])
+    indices_top = ListProperty([])
+    vertices_bot = ListProperty([])
+    indices_bot = ListProperty([])
+    new_bot_y = NumericProperty()
+    
+    'gap between top and bottom terrain'
+    gap = NumericProperty(500)
+    'tunnel speed needs to be the same as obstacle speed'
+    velocity = NumericProperty(5)
+    'the speed at which the gap gets smaller'
+    gap_change = NumericProperty(0.1)
+    i = 1
+    
+    def __init__(self, **kw):
+        super(Tunnel, self).__init__(**kw)
+        self.generate_bot()
+        self.generate_top()
+    
+    def initilise(self):
+        self.gap = 500
+        self.vertices_bot = [] 
+        self.vertices_top = []
+        self.indices_bot = [] 
+        self.indices_top= []
+        self.generate_bot()
+        self.generate_top()
+    
+    def generate_bot(self):
+        self.vertices_bot = -100, 0, 0, 0
+        self.indices_bot.append(1)
+        for x in range(-100, 900, 50):
+            self.i = self.i+1
+            y = 50
+            self.vertices_bot.extend([x, y, 0, 0])
+            self.indices_bot.append(self.i)
+        self.vertices_bot.extend([900, 0, 0, 0])
+        self.indices_bot.extend([self.i+1,])    
+        self.i = 1
+        
+    def generate_top(self):
+        self.vertices_top = -100, 600, 0, 0
+        self.indices_top.append(1)
+        for x in range(-100, 900, 50):
+            self.i = self.i+1
+            y = self.gap+50
+            self.vertices_top.extend([x, y, 0, 0])
+            self.indices_top.append(self.i)
+        self.vertices_top.extend([900, 600, 0, 0])
+        self.indices_top.extend([self.i+1])    
+        self.i = 1
+    
+    def move_bot(self):
+        list_length = len(self.vertices_bot)
+        new_point = len(self.vertices_bot) - 4
+        lower_bound = self.vertices_bot[81] - 40
+        upper_bound = self.vertices_bot[81] + 40
+        top = upper_bound + self.gap
+        if lower_bound < 0:
+            lower_bound = 0
+        if top > self.game.height:
+            upper_bound = int(self.game.height - self.gap)           
+        vx = 900
+        self.new_bot_y = randrange(lower_bound, upper_bound, 1)
+        tx = 0
+        ty = 0
+        for x in range(4, list_length-4, 4):
+            if self.vertices_bot[x] < -100:
+                self.vertices_bot.insert(new_point, ty)
+                self.vertices_bot.insert(new_point, tx)
+                self.vertices_bot.insert(new_point, self.new_bot_y)
+                self.vertices_bot.insert(new_point, vx)                
+                del self.vertices_bot[x]
+                del self.vertices_bot[x]
+                del self.vertices_bot[x]
+                del self.vertices_bot[x]
+            self.vertices_bot[x] = self.vertices_bot[x] - self.velocity        
+                
+    def move_top(self):
+        list_length = len(self.vertices_top)
+        new_point = len(self.vertices_top)-4
+        vx = 900
+        vy = self.new_bot_y + self.gap
+        tx = 0
+        ty = 0
+        for x in range(4, list_length-4, 4):
+            if self.vertices_top[x] < -100:
+                self.vertices_top.insert(new_point, ty)
+                self.vertices_top.insert(new_point, tx)
+                self.vertices_top.insert(new_point, vy)
+                self.vertices_top.insert(new_point, vx)                
+                del self.vertices_top[x]
+                del self.vertices_top[x]
+                del self.vertices_top[x]
+                del self.vertices_top[x]   
+            self.vertices_top[x] = self.vertices_top[x] - self.velocity     
+                
+    def update(self):
+        #helicopter height + obstacle height + allowable margin
+        min_gap = self.game.helicopter.height + 80 + 100
+        if self.gap > min_gap:
+            self.gap = self.gap - self.gap_change 
+        self.move_bot()
+        self.move_top()
+        
 class Obstacle(Widget):
     game = ObjectProperty(None)
     'size of obstacle'
@@ -155,8 +193,8 @@ class Obstacle(Widget):
         pos_x = self.game.get_right()  #x-co-ordinate of new obstacle
         #Hacky way to link obstacles to wall
         #better way?
-        self.tunnel_top = self.game.tunnel.points_b[23] - self.obstacle_height/2  #obstacle can be half way into wall
-        self.tunnel_bot = self.game.tunnel.points_a[23] - self.obstacle_height/2
+        self.tunnel_top = int(self.game.tunnel.vertices_top[73] - self.obstacle_height/2)  #obstacle can be half way into wall
+        self.tunnel_bot = int(self.game.tunnel.vertices_bot[73] - self.obstacle_height/2)
         pos_y = randrange(self.tunnel_bot, self.tunnel_top, 1)  #y-co-ordinate of new obstacle 
         self.pos = pos_x, pos_y
         self.size = self.sizing      #Otherwise size is 100,100 (although visibly doesn't look this size
@@ -186,8 +224,8 @@ class Helicopter(Widget):
     game = ObjectProperty(None)
     
     'Helicopter physics'
-    general_velocity = NumericProperty(2)
-    general_acceleration = NumericProperty(0.6)
+    general_velocity = NumericProperty(1)
+    general_acceleration = NumericProperty(0.2)
     
     'helicopter size'
     sizing = ListProperty([0.08, 0.1])
@@ -240,19 +278,21 @@ class Helicopter(Widget):
             self.velocity = Vector(0,-self.general_velocity) + Vector(*self.acceleration)
             self.pos = Vector(*self.velocity) + self.pos
     
-    #Passed HelicopterGame at a method level.  How to pass it to whole class?
-    #Like for StartPopUp
-    def alive_check(self):
-        #obstacle collision
+    def obstacle_collision(self):
         for obstacle in self.game.obstacles:
             if self.collide_widget(obstacle):
                 self.game.end_game()
-        #Dead
-        if (self.y < 0) or (self.top > self.game.height):
+    
+    'very hacky, need to fix'
+    def tunnel_collision(self):
+        cond1 = self.get_top() > self.game.tunnel.vertices_top[21]
+        cond2 = self.y < self.game.tunnel.vertices_bot[21]
+        if cond1 or cond2:
             self.game.end_game()
-        #Alive    
-        else:
-            return True 
+                    
+    def alive_check(self):
+        self.obstacle_collision()
+        self.tunnel_collision()
         
 class HelicopterGame(Widget):
     app = ObjectProperty(None)
@@ -262,11 +302,12 @@ class HelicopterGame(Widget):
     obstacles = ListProperty([])
     
     'time until first obstacle'
-    time_first_ob = NumericProperty(2)   
+    time_first_ob = NumericProperty(1)   
     game_state = BooleanProperty(False)
     
     #Runs when popup is clicked        
     def start_game(self):
+        self.tunnel.initilise()
         for obstacle in self.obstacles:
             self.remove_widget(obstacle)
             self.obstacles = self.obstacles[1:] 
@@ -297,7 +338,7 @@ class HelicopterGame(Widget):
             self.helicopter.alive_check()     
             self.background.scroll_background()
             self.helicopter.move()
-            self.tunnel.move()  
+            self.tunnel.update()  
             for obstacle in self.obstacles:
                 obstacle.update()   
 

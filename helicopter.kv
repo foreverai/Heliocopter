@@ -27,13 +27,16 @@
 <Tunnel>
 	game: app.game
 	canvas:
-		Bezier:
-			id: bezier_top
-			points: self.points_a
-			segments: 180
-		Bezier:
-			points: self.points_b
-			segments: 180    
+        Color:
+            rgba: 0.5, 0.5, 0.5, 1
+        Mesh:    
+            vertices: self.vertices_top
+            indices: self.indices_top
+            mode: 'line_strip'        
+        Mesh:    
+            vertices: self.vertices_bot
+            indices: self.indices_bot
+            mode: 'line_strip'     
 			
 <Obstacle>
 	game: app.game
@@ -66,7 +69,7 @@
 		        id: background_obj  
 
 		    Tunnel:
-		    	id: tunnel_obj    
+		    	id: tunnel_obj   
 		    	
 		    Helicopter:
 				id: helicopter_obj
